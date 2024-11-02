@@ -1,4 +1,4 @@
-# altscore_challenge
+# Altscore Challenge
 
 Para poder generar el ambiente vía el _Dockerfile_:
 ```console
