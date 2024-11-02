@@ -12,3 +12,11 @@
 **/*.parquet
 *.parquet
 /**/*.parquet
+
+# Kaggle JSON
+kaggle.json
+
+# SWP
+**/*.swp
+*.swp
+/**/*.swp
