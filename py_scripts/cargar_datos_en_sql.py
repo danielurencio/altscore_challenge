@@ -2,6 +2,7 @@ import gc
 import sqlite3
 from pathlib import Path
 from typing import Union
+from datetime import datetime
 
 import h3
 import pandas as pd
@@ -17,7 +18,7 @@ def configurar_conexion() -> sqlite3.Connection:
     pragmas = {
         'journal_mode': 'OFF',      # Deshabilita journaling para máxima velocidad
         'synchronous': 'OFF',       # Deshabilita sincronización con disco
-        'cache_size': -2000000,     # Cache de 2GB
+        'cache_size': -4000000,     # Cache de 4GB
         'temp_store': 'MEMORY'      # Temporales en memoria
     }
     
@@ -120,44 +121,95 @@ def configurar_para_indices(db_path: Union[str, Path]) -> None:
 
 def creacion_de_indices(db_path: Union[str, Path]) -> None:
     """
-    Ejecuta script de optimización sobre la base de datos.
-    Solo ejecuta los comandos, no realiza configuraciones.
+    Ejecuta script de optimización sobre la base de datos con configuraciones
+    optimizadas para manejar grandes volúmenes de datos.
     """
-    script = """
-    -- Índices básicos
-    CREATE INDEX IF NOT EXISTS idx_mobility_device ON mobility(device_id);
-    CREATE INDEX IF NOT EXISTS idx_mobility_h3 ON mobility(h3_index);
-    CREATE INDEX IF NOT EXISTS idx_mobility_device_h3 ON mobility(device_id, h3_index);
-    CREATE INDEX IF NOT EXISTS idx_mobility_time ON mobility(timestamp);
-
-    -- Configuración espacial
-    SELECT load_extension('mod_spatialite');
-    SELECT InitSpatialMetaData(1);
-
-    -- Columna espacial
-    ALTER TABLE mobility ADD COLUMN IF NOT EXISTS geom POINT;
-    UPDATE mobility SET geom = MakePoint(lon, lat, 4326);
-    SELECT CreateSpatialIndex('mobility', 'geom');
-    SELECT UpdateLayerStatistics('mobility', 'geom');
-
-    -- Columna temporal
-    ALTER TABLE mobility ADD COLUMN IF NOT EXISTS fecha DATETIME;
-    UPDATE mobility SET fecha = datetime(timestamp, 'unixepoch');
+    start_time = datetime.now()
+    
+    # Separamos los comandos por tipo para mejor control
+    optimization_settings = """
+    PRAGMA journal_mode = OFF;
+    PRAGMA synchronous = OFF;
+    PRAGMA cache_size = -2000000;  -- Use 2GB of cache
+    PRAGMA temp_store = MEMORY;
+    PRAGMA mmap_size = 30000000000;
+    PRAGMA page_size = 4096;  -- Optimal page size for most systems
     """
+    
+    index_commands = [
+        "CREATE INDEX IF NOT EXISTS idx_mobility_device ON mobility(device_id)",
+        "CREATE INDEX IF NOT EXISTS idx_mobility_h3 ON mobility(h3_index)",
+        "CREATE INDEX IF NOT EXISTS idx_mobility_device_h3 ON mobility(device_id, h3_index)",
+        "CREATE INDEX IF NOT EXISTS idx_mobility_time ON mobility(timestamp)"
+    ]
+    
+    spatial_setup = [
+        "SELECT load_extension('mod_spatialite')",
+        "SELECT InitSpatialMetaData(1)"
+    ]
+    
+    spatial_columns = [
+        "ALTER TABLE mobility ADD COLUMN IF NOT EXISTS geom POINT",
+        "UPDATE mobility SET geom = MakePoint(lon, lat, 4326)",
+        "SELECT CreateSpatialIndex('mobility', 'geom')",
+        "SELECT UpdateLayerStatistics('mobility', 'geom')"
+    ]
+    
+    temporal_columns = [
+        "ALTER TABLE mobility ADD COLUMN IF NOT EXISTS fecha DATETIME",
+        "UPDATE mobility SET fecha = datetime(timestamp, 'unixepoch')"
+    ]
     
     conn = sqlite3.connect(db_path)
     try:
         conn.enable_load_extension(True)
-        for command in script.strip().split(';'):
+        
+        # Aplicar configuraciones de optimización
+        print("\nAplicando configuraciones de optimización...")
+        for command in optimization_settings.strip().split(';'):
             if command.strip():
                 try:
                     conn.execute(command)
                     conn.commit()
-                    print(f"Ejecutado: {command.strip().split()[0]}")
                 except sqlite3.OperationalError as e:
-                    print(f"Error en comando {command.strip().split()[0]}: {e}")
+                    print(f"Error en configuración {command.strip()}: {e}")
+        
+        # Función helper para ejecutar comandos con timing
+        def execute_command(command: str, description: str) -> None:
+            command_start = datetime.now()
+            try:
+                conn.execute(command)
+                conn.commit()
+                command_time = datetime.now() - command_start
+                print(f"Completado: {description} - Tiempo: {command_time}")
+            except sqlite3.OperationalError as e:
+                print(f"Error en {description}: {e}")
+        
+        # Ejecutar comandos por grupos
+        print("\nCreando índices básicos...")
+        for cmd in index_commands:
+            execute_command(cmd, cmd.split()[4])  # Nombre del índice
+            
+        print("\nConfigurando extensión espacial...")
+        for cmd in spatial_setup:
+            execute_command(cmd, cmd.strip())
+            
+        print("\nCreando columnas espaciales...")
+        for cmd in spatial_columns:
+            execute_command(cmd, cmd.strip().split()[0])  # Primer palabra del comando
+            
+        print("\nCreando columnas temporales...")
+        for cmd in temporal_columns:
+            execute_command(cmd, cmd.strip().split()[0])  # Primer palabra del comando
+            
     finally:
+        # Restaurar configuraciones normales antes de cerrar
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
         conn.close()
+    
+    total_time = datetime.now() - start_time
+    print(f"\nTiempo total de ejecución: {total_time}")
 
 
 
