@@ -19,8 +19,8 @@ sudo docker rm -f altscore_challenge || true
 
 sudo docker run -d \
   --name altscore_challenge \
-  --memory="4g" \
-  --cpus=2 \
+  --memory="7g" \
+  --cpus=4 \
   -v "$HOST_PATH":/app/db \
   altscore_env 
 ```
