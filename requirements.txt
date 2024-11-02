@@ -1,0 +1,7 @@
+matplotlib>=3.8.0,<3.9.0
+geopandas==1.0.1
+pandas~=2.1.0
+fiona==1.10.1
+shapely==2.0.6
+h3==4.1.2
+pyarrow==18.0.0

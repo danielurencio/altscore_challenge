@@ -1,0 +1,14 @@
+# ZIP
+**/*.zip
+*.zip
+/**/*.zip
+
+# CSV
+**/*.csv
+*.csv
+/**/*.csv
+
+# Parquet
+**/*.parquet
+*.parquet
+/**/*.parquet
