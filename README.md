@@ -7,12 +7,21 @@ sudo docker build -t altscore_env .
 
 Y, después:
 ```console
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    # Windows-specific
+    export HOST_PATH=$(pwd -W)/db
+else
+    # Unix/Linux-specific
+    export HOST_PATH=$(pwd)/db
+fi
+
 sudo docker rm -f altscore_challenge || true
 
 sudo docker run -d \
-  --name altscore_challenge \
+  --name altscore_challenge1 \
   --memory="4g" \
   --cpus=2 \
+  -v "$HOST_PATH":/app/db \
   altscore_env 
 ```
 
