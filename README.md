@@ -7,9 +7,10 @@ sudo docker build -t altscore_env .
 
 Y, después:
 ```console
+sudo docker rm -f altscore_challenge || true
+
 sudo docker run -d \
   --name altscore_challenge \
-  -v "$(pwd):/app" \
   --memory="4g" \
   --cpus=2 \
   altscore_env 

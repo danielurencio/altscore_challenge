@@ -1,6 +1,15 @@
 FROM python:3.11-slim
 
+# Evitar interacciones durante la instalación
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app
+
+# Instalar dependencias del sistema incluyendo unzip
+RUN apt-get update && apt-get install -y \
+    unzip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Actualiza pip
 RUN pip install --no-cache-dir --upgrade pip
@@ -25,11 +34,18 @@ COPY kaggle.json /root/.kaggle/
 RUN chmod 600 /root/.kaggle/kaggle.json
 
 # Descarga los datos de la competencia
-RUN kaggle competitions download -c alt-score-data-science-competition
-RUN mkdir -p altscore_data
-RUN unzip alt-score-data-science-competition.zip -d altscore_data
-# Copia los scripts
-COPY ./py_scripts .
-COPY ./shell_scripts .
+RUN kaggle competitions download -c alt-score-data-science-competition \
+    && mkdir -p altscore_data \
+    && unzip alt-score-data-science-competition.zip -d altscore_data \
+    && rm alt-score-data-science-competition.zip  # Limpiar archivo zip
 
+# Copia los scripts
+#COPY ./py_scripts .
+#COPY ./shell_scripts .
+
+# Crea y copia a directorios específicos
+COPY ./py_scripts ./py_scripts/
+COPY ./shell_scripts ./shell_scripts/
+
+# Mantén el ambiente corriendo
 CMD ["tail", "-f", "/dev/null"]
