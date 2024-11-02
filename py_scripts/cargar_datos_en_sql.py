@@ -96,6 +96,17 @@ def configurar_para_indices(db_path: Union[str, Path]) -> None:
         'page_size': 4096,          # Tamaño página óptimo
         'temp_store': 'MEMORY'      # Temporales en memoria
     }
+
+    pragmas = {
+    'journal_mode': 'OFF',          # Máxima velocidad, sin journaling
+    'synchronous': 'OFF',           # Sin espera de confirmación de disco
+    'cache_size': -2000000,         # 2GB cache (mantener)
+    'temp_store': 'MEMORY',         # Mantener en memoria
+    'page_size': 4096,              # Mantener
+    'mmap_size': 30000000000,       # Mantener
+    'busy_timeout': 60000,          # Timeout para bloqueos
+    'locking_mode': 'EXCLUSIVE'     # Bloqueo exclusivo para mejor rendimiento
+    }
     
     try:
         for setting, value in pragmas.items():
