@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia el resto de tu código
 COPY ./py_script .
 COPY ./shell_scripts .
-COPY .alt-score-data-science-competition.zip
 
 CMD ["tail", "-f", "/dev/null"]
 
