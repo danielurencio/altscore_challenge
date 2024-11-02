@@ -20,9 +20,7 @@ COPY requirements.txt .
 
 # Instala las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Instala kaggle
-RUN pip install --no-cache-dir kaggle
+RUN rm requirements.txt
 
 # Configura el directorio para las credenciales de Kaggle
 RUN mkdir -p /root/.kaggle

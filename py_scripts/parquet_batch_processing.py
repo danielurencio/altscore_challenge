@@ -37,6 +37,7 @@ parquet_file = pq.ParquetFile('altscore_data/mobility_data.parquet')
 
 # Cargar el GeoJSON con la geometría de todos los países del mundo
 world = gpd.read_file('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+world = world.to_crs(crs="EPSG:4326")
 
 # Lista para almacenar países únicos encontrados
 paises = list()
