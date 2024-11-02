@@ -1,8 +1,11 @@
 import gc
+from datetime import datetime
+
 import pandas as pd
 import geopandas as gpd
 import pyarrow.parquet as pq
 from shapely.geometry import Point
+from tqdm import tqdm
 
 
 def get_country_for_coords(df, lat_col, lng_col):
@@ -45,27 +48,33 @@ paises = list()
 # Variable para rastrear cambios en el tamaño de la lista de países
 arr_size = len(paises)
 
-# Iterar sobre el archivo parquet en batches para manejo eficiente de memoria
-for batch in parquet_file.iter_batches(batch_size=batch_size):
-   # Convertir el batch actual a DataFrame de pandas
-   df_batch = batch.to_pandas()
+total_rows = parquet_file.metadata.num_rows
+start_time = datetime.now()
 
-   # Obtener los países correspondientes a las coordenadas en el batch actual
-   # usando las columnas 'lat' y 'lon' del DataFrame
-   paises_en_df = get_country_for_coords(df_batch, 'lat', 'lon')
+with tqdm(total=total_rows, desc="Procesando registros") as pbar:
+    records_processed = 0
+    for batch in parquet_file.iter_batches(batch_size=batch_size):
+        df_batch = batch.to_pandas()
+        batch_size = len(df_batch)
+        records_processed += batch_size
 
-   # Agregar nuevos países encontrados a la lista si no están ya presentes
-   for pais in paises_en_df:
-       if pais not in paises:
-           paises.append(pais)
+        paises_en_df = get_country_for_coords(df_batch, 'lat', 'lon')
 
-   # Si se encontraron nuevos países, imprimir la lista actualizada
-   if len(paises) != arr_size:
-       print(paises)
-       arr_size = len(paises)
+        for pais in paises_en_df:
+            if pais not in paises:
+                paises.append(pais)
+                print(f"\nNuevo país encontrado: {pais}")
 
-   # Liberar memoria eliminando el DataFrame del batch actual
-   del df_batch
+        # Actualizar barra y mostrar estadísticas
+        pbar.update(batch_size)
+        pbar.set_postfix({
+            'Países': len(paises),
+            'Registros': f"{records_processed:,}/{total_rows:,}",
+            'Progreso': f"{(records_processed/total_rows)*100:.1f}%"
+        })
 
-   # Forzar la recolección de basura para liberar memoria
-   gc.collect()
+        del df_batch
+        gc.collect()
+
+tiempo_total = datetime.now() - start_time
+print(f"\nTiempo total de procesamiento: {tiempo_total}")

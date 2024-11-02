@@ -4,11 +4,15 @@ FROM python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
+RUN mkdir -p /app/db
 
 # Instalar dependencias del sistema incluyendo unzip
 RUN apt-get update && apt-get install -y \
     unzip \
     curl \
+    vim \
+    sqlite3 \
+    libsqlite3-mod-spatialite \
     && rm -rf /var/lib/apt/lists/*
 
 # Actualiza pip
@@ -36,10 +40,6 @@ RUN kaggle competitions download -c alt-score-data-science-competition \
     && mkdir -p altscore_data \
     && unzip alt-score-data-science-competition.zip -d altscore_data \
     && rm alt-score-data-science-competition.zip  # Limpiar archivo zip
-
-# Copia los scripts
-#COPY ./py_scripts .
-#COPY ./shell_scripts .
 
 # Crea y copia a directorios específicos
 COPY ./py_scripts ./py_scripts/
