@@ -1,10 +1,34 @@
 import gc
+import sqlite3
 from datetime import datetime
 
 import h3
 import pandas as pd
 import pyarrow.parquet as pq
 from tqdm import tqdm
+
+def crear_base_datos():
+    conn = sqlite3.connect('mobility.db')
+    conn.execute('PRAGMA journal_mode = WAL')
+    conn.execute('PRAGMA synchronous = NORMAL')
+    conn.execute('PRAGMA cache_size = -2000000')  # 2GB cache
+    conn.execute('PRAGMA mmap_size = 2000000000')
+    conn.execute('PRAGMA temp_store = MEMORY')
+    conn.execute('PRAGMA journal_size_limit = 67110000')
+    c = conn.cursor()
+    
+    # Crear tabla con índices
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS mobility (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT,
+            timestamp DATETIME,
+            lat REAL,
+            lon REAL
+        );
+    ''')
+    conn.commit()
+    return conn
 
 
 def get_h3_for_coords(df, lat_col, lng_col, resolution=9):
