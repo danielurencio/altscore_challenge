@@ -15,6 +15,11 @@ RUN apt-get update && apt-get install -y \
     libsqlite3-mod-spatialite \
     && rm -rf /var/lib/apt/lists/*
 
+# Crear .sqliterc con configuraciones por defecto
+RUN echo ".mode box\n\
+.headers on\n\
+.timer on" > /root/.sqliterc
+
 # Actualiza pip
 RUN pip install --no-cache-dir --upgrade pip
 
