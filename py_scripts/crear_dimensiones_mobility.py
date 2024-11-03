@@ -109,7 +109,7 @@ queries = [
         h3_index TEXT PRIMARY KEY
     );
     INSERT INTO dim_00__fact_table
-    select distinct hex_3_index from dim_01__basic_metrics;
+    select distinct h3_index from dim_01__basic_metrics;
     """, # Query 4: Métricas de permanencia temporal
     """
     CREATE TABLE IF NOT EXISTS dim_04__duration_metrics (

@@ -15,6 +15,9 @@
 
 # Kaggle JSON
 kaggle.json
+**/*.json
+*.json
+/**/*.json
 
 # SWP
 **/*.swp

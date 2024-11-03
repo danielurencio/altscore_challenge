@@ -1,8 +1,38 @@
-import requests
+import os
 import time
 import json
-import os
 import random
+import requests
+
+import h3
+import pandas as pd
+
+property_types = [
+    {"label": "Departamento", "min": "2"},
+    {"label": "Casa", "min": "1"},
+    {"label": "Terreno / Lote", "min": "3"},
+    {"label": "Local comercial", "min": "5"},
+    {"label": "Oficina comercial", "min": "4"},
+    {"label": "Suite", "min": "9"},
+    {"label": "Bodega-Galpón", "min": "8"},
+    {"label": "Consultorio", "min": "10"},
+    {"label": "Edificio-Hotel-Fabrica", "min": "7"},
+    {"label": "Habitación", "min": "25"},
+    {"label": "Hacienda-Quinta", "min": "6"},
+    {"label": "Parqueadero", "min": "32"},
+    {"label": "Proyecto horizontal", "min": "33"},
+    {"label": "Proyecto vertical", "min": "34"},
+    {"label": "Quinta vacacional", "min": "11"}
+]
+
+
+operation_types = [
+    {"label": "Alquilar", "min": "2"},
+    {"label": "Comprar", "min": "1"},
+    {"label": "Temporal/Vacacional", "min": "4"},
+    {"label": "Proyectos", "min": "desarrollosURL"},
+    {"label": "Traspaso", "min": "3"}
+]
 
 # Create a directory to save each response as a JSON file
 os.makedirs('ecuador_listings', exist_ok=True)
@@ -41,49 +71,91 @@ ecuador_ne = {'lat': 1.483404, 'lng': -75.192466}   # Northeast corner
 lat_step = 0.5
 lng_step = 0.5
 
-# Function to fetch listings in a specific bounding box
-def fetch_listings(sw_lat, sw_lng, ne_lat, ne_lng):
-    payload = {
-        "coordenates": f"swLat:{sw_lat},swLng:{sw_lng},neLat:{ne_lat},neLng:{ne_lng}",
-        "tipoDePropiedad": "1",  # House (you can adjust as needed)
-        "tipoDeOperacion": "1",  # Buy (you can adjust as needed)
-        "sort": "relevance",
+
+def get_hexagon_bbox(h3_index: str) -> tuple:
+    """
+    Obtiene las coordenadas del bounding box (min_lat, min_lng, max_lat, max_lng)
+    que rodea a un hexágono H3.
+    
+    Args:
+        h3_index: Índice H3 del hexágono
+    
+    Returns:
+        tuple: (min_lat, min_lng, max_lat, max_lng)
+    """
+    # Obtener los vértices del hexágono
+    boundaries = h3.cell_to_boundary(h3_index)
+    
+    # Extraer listas separadas de latitudes y longitudes
+    lats = [vertex[0] for vertex in boundaries]
+    lngs = [vertex[1] for vertex in boundaries]
+    
+    # Encontrar los valores mínimos y máximos
+    min_lat = min(lats)
+    max_lat = max(lats)
+    min_lng = min(lngs)
+    max_lng = max(lngs)
+    
+    return (min_lat, min_lng, max_lat, max_lng)
+
+
+def get_bbox_corners(bbox: tuple) -> dict:
+    min_lat, min_lng, max_lat, max_lng = bbox
+    return {
+        'sw_lat': min_lat,
+        'sw_lng': min_lng,
+        'ne_lat': max_lat,
+        'ne_lng': max_lng
     }
-    
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: {response.status_code}")
-    return {}
 
-# Iterate over the grid and fetch listings
-lat = ecuador_sw['lat']
-while lat < ecuador_ne['lat']:
-    lng = ecuador_sw['lng']
-    while lng < ecuador_ne['lng']:
-        # Define bounding box for the current grid cell
-        sw_lat, sw_lng = lat, lng
-        ne_lat, ne_lng = lat + lat_step, lng + lng_step
-
-        # Fetch listings in the current grid cell
-        data = fetch_listings(sw_lat, sw_lng, ne_lat, ne_lng)
+def fetch_listings_by_type(property_key, operation_key):
+    property_type = [d['min'] for d in property_types if d['label'] == property_key][0]
+    operation_type = [d['min'] for d in operation_types if d['label'] == operation_key][0]
+    def fetch_listings(bbox_coords: dict) -> dict:
+        payload = {
+            "coordenates": f"swLat:{bbox_coords['sw_lat']},swLng:{bbox_coords['sw_lng']},neLat:{bbox_coords['ne_lat']},neLng:{bbox_coords['ne_lng']}",
+            "tipoDePropiedad": f"{property_type}",  # Casa
+            "tipoDeOperacion": f"{operation_type}",  # Venta
+            "sort": "relevance",
+        }
         
-        # Save each response to a unique JSON file
-        file_name = f"ecuador_listings/listings_{sw_lat}_{sw_lng}_{ne_lat}_{ne_lng}.json"
-        with open(file_name, 'w') as f:
-            json.dump(data, f, indent=2)
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            json_response = response.json()
+            return json_response
+        except requests.exceptions.RequestException as e:
+            print(f"Error en la petición: {e}")
+            return {}
         
-        print(f"Fetched and saved data for area SW({sw_lat}, {sw_lng}) NE({ne_lat}, {ne_lng})")
-        
-        # Move to the next cell in the longitude direction
-        lng += lng_step
+    return fetch_listings
 
-        # Respectful pause to avoid overwhelming the server
-        secs = random.randint(1, 3)
-        time.sleep(2)  # Adjust as needed
-    
-    # Move to the next row in the latitude direction
-    lat += lat_step
 
-print("Data fetching completed.")
+if __name__ == '__main__':
+    h = pd.read_csv('hex.csv.gzip', compression='gzip')
+    h.loc[:, 'bbox'] = h.loc[:, 'hex_id'].map(get_hexagon_bbox)
+    h.loc[:, 'bbox_corners'] = h.loc[:, 'bbox'].map(get_bbox_corners)
+
+    for i, row in h.iterrows():
+
+        for property in property_types:
+            property_type = property['label']
+
+            for operation in operation_types:
+                operation_type = operation['label']
+                filename = f"{row['hex_id']}_{property['min']}_{operation['min']}"
+
+                if filename not in os.listdir('ecuador_listings'):
+                    resp = fetch_listings_by_type(property_type, operation_type)(row['bbox_corners'])
+                    resp['hex_id'] = filename
+                    resp['bbox_corners'] = row['bbox_corners']
+
+                    sleeping_secs = random.randint(1, 4)
+                    time.sleep(sleeping_secs)
+
+                    complete_filename = f'ecuador_listings/{filename}.json'
+                    with open(complete_filename, 'w', encoding='utf-8') as f:
+                        json.dump(resp, f, indent=4, ensure_ascii=False)
+                        print(filename)
+                else:
+                    print(f'{filename} exists')
