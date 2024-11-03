@@ -191,7 +191,7 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     
     total_time = datetime.now() - start_time
     print(f"\nTiempo total de ejecución: {total_time}")
-Last edited 
+
 
 
 
