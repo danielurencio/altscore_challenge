@@ -158,33 +158,33 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     try:
         conn.enable_load_extension(True)
         
-        def execute_command(command: str, description: str) -> None:
+        def execute_command(command: str) -> None:
             command_start = datetime.now()
             try:
                 conn.execute(command)
                 conn.commit()
                 command_time = datetime.now() - command_start
-                print(f"Completado: {description} - Tiempo: {command_time}")
+                print(f"Completado: \n{command}\n - Tiempo: {command_time}\n")
                 with open(progress_file, 'a') as f:
-                    f.write(f"{description} - {datetime.now()}\n")
+                    f.write(f"{command} - {datetime.now()}\n")
             except sqlite3.OperationalError as e:
-                print(f"Error en {description}: {e}")
+                print(f"Error en {command}: {e}")
         
         print("\nCreando índices básicos...")
         for cmd in index_commands:
-            execute_command(cmd, cmd.split()[4])
+            execute_command(cmd)
             
         print("\nConfigurando extensión espacial...")
         for cmd in spatial_setup:
-            execute_command(cmd, cmd.strip())
+            execute_command(cmd)
             
         print("\nCreando columnas espaciales...")
         for cmd in spatial_columns:
-            execute_command(cmd, cmd.strip().split()[0])
+            execute_command(cmd)
             
         print("\nCreando columnas temporales...")
         for cmd in temporal_columns:
-            execute_command(cmd, cmd.strip().split()[0])
+            execute_command(cmd)
             
     finally:
         conn.close()
