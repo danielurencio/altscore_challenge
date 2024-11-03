@@ -151,7 +151,9 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     
     temporal_columns = [
         "ALTER TABLE mobility ADD COLUMN fecha DATETIME",
-        "UPDATE mobility SET fecha = datetime(timestamp, 'unixepoch')"
+        "UPDATE mobility SET fecha = datetime(timestamp, 'unixepoch')",
+        "CREATE INDEX idx_mobility_fecha ON mobility(fecha)",
+        "CREATE INDEX idx_mobility_h3_fecha ON mobility(h3_index, fecha)"
     ]
     
     conn = sqlite3.connect(db_path)
