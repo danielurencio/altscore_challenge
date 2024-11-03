@@ -128,6 +128,7 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     Solo ejecuta los comandos, no realiza configuraciones.
     """
     start_time = datetime.now()
+    progress_file = Path(db_path).parent / 'index_progress.txt'
     
     index_commands = [
         "CREATE INDEX IF NOT EXISTS idx_mobility_device ON mobility(device_id)",
@@ -157,7 +158,6 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     try:
         conn.enable_load_extension(True)
         
-        # Función helper para ejecutar comandos con timing
         def execute_command(command: str, description: str) -> None:
             command_start = datetime.now()
             try:
@@ -165,13 +165,14 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
                 conn.commit()
                 command_time = datetime.now() - command_start
                 print(f"Completado: {description} - Tiempo: {command_time}")
+                with open(progress_file, 'a') as f:
+                    f.write(f"{description} - {datetime.now()}\n")
             except sqlite3.OperationalError as e:
                 print(f"Error en {description}: {e}")
         
-        # Ejecutar comandos por grupos
         print("\nCreando índices básicos...")
         for cmd in index_commands:
-            execute_command(cmd, cmd.split()[4])  # Nombre del índice
+            execute_command(cmd, cmd.split()[4])
             
         print("\nConfigurando extensión espacial...")
         for cmd in spatial_setup:
@@ -179,17 +180,18 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
             
         print("\nCreando columnas espaciales...")
         for cmd in spatial_columns:
-            execute_command(cmd, cmd.strip().split()[0])  # Primera palabra del comando
+            execute_command(cmd, cmd.strip().split()[0])
             
         print("\nCreando columnas temporales...")
         for cmd in temporal_columns:
-            execute_command(cmd, cmd.strip().split()[0])  # Primera palabra del comando
+            execute_command(cmd, cmd.strip().split()[0])
             
     finally:
         conn.close()
     
     total_time = datetime.now() - start_time
     print(f"\nTiempo total de ejecución: {total_time}")
+Last edited 
 
 
 
