@@ -150,7 +150,7 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     ]
     
     temporal_columns = [
-        "SELECT CASE WHEN COUNT(*) = 0 THEN 'ALTER TABLE mobility ADD COLUMN fecha DATETIME' ELSE 'SELECT 1' END FROM pragma_table_info('mobility') WHERE name = 'fecha'",
+        "ALTER TABLE mobility ADD COLUMN fecha DATETIME",
         "UPDATE mobility SET fecha = datetime(timestamp, 'unixepoch')"
     ]
     
