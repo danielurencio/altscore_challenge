@@ -164,25 +164,41 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
                 conn.execute(command)
                 conn.commit()
                 command_time = datetime.now() - command_start
-                print(f"Completado: \n{command}\n - Tiempo: {command_time}\n")
                 with open(progress_file, 'a') as f:
-                    f.write(f"{command} - {datetime.now()}\n")
+                    status_msg = f"Completado: \n{command}\n - Tiempo: {command_time}\n"
+                    f.write(status_msg)
+                    print(status_msg)
             except sqlite3.OperationalError as e:
-                print(f"Error en {command}: {e}")
-        
-        print("\nCreando índices básicos...")
+                err_msg = f"Error en {command}: {e}\n"
+                with open(progress_file, 'a') as f:
+                    f.write(err_msg)
+                    print(err_msg)
+       
+        basic_msg = "\nCreando índices básicos..."
+        with open(progress_file, 'a') as f:
+            f.write(basic_msg)
+            print(basic_msg)
         for cmd in index_commands:
             execute_command(cmd)
-            
-        print("\nConfigurando extensión espacial...")
+           
+        spatial_msg = "\nConfigurando extensión espacial..."
+        with open(progress_file, 'a') as f:
+            f.write(spatial_msg)
+            print(spatial_msg)
         for cmd in spatial_setup:
             execute_command(cmd)
             
-        print("\nCreando columnas espaciales...")
+        spatial_col_msg = "\nCreando columnas espaciales..."
+        with open(progress_file, 'a') as f:
+            f.write(spatial_col_msg)
+            print(spatial_col_msg)
         for cmd in spatial_columns:
             execute_command(cmd)
             
-        print("\nCreando columnas temporales...")
+        temporal_msg = "\nCreando columnas temporales..."
+        with open(progress_file, 'a') as f:
+            f.write(temporal_msg)
+            print(temporal_msg)
         for cmd in temporal_columns:
             execute_command(cmd)
             
