@@ -1,3 +1,5 @@
+from pathlib import Path
+from datetime import datetime
 import sqlite3
 
 
@@ -267,6 +269,24 @@ queries = [
 ]
 
 
+# def execute_queries(db_path, queries):
+#     """
+#     Ejecuta una lista de queries SQL para crear tablas de métricas.
+
+#     Args:
+#         db_path (str): Ruta al archivo de la base de datos SQLite
+#         queries (list): Lista de strings conteniendo los queries SQL
+#     """
+#     with sqlite3.connect(db_path) as conn:
+#         for query in queries:
+#             print('\n\n')
+#             print(query)
+#             try:
+#                 conn.executescript(query)
+#                 conn.commit()
+#             except sqlite3.Error as e:
+#                 print(f"Error ejecutando query: {str(e)}")
+#                 continue
 def execute_queries(db_path, queries):
     """
     Ejecuta una lista de queries SQL para crear tablas de métricas.
@@ -275,16 +295,54 @@ def execute_queries(db_path, queries):
         db_path (str): Ruta al archivo de la base de datos SQLite
         queries (list): Lista de strings conteniendo los queries SQL
     """
+    # Crear archivo de progress
+    progress_file = Path(db_path).parent / 'dim_progress.txt'
+    
+    # Tiempo inicial
+    start_time = datetime.now()
+    last_time = start_time
+    
+    def log_message(message):
+        """Helper function para logging tanto a consola como a archivo"""
+        current_time = datetime.now()
+        timestamp = current_time.strftime('%Y-%m-%d %H:%M:%S')
+        formatted_message = f"[{timestamp}] {message}"
+        
+        # Print a consola
+        print(formatted_message)
+        
+        # Escribir a archivo
+        with open(progress_file, 'a') as f:
+            f.write(formatted_message + '\n')
+    
     with sqlite3.connect(db_path) as conn:
-        for query in queries:
-            print('\n\n')
-            print(query)
+        for i, query in enumerate(queries, 1):
+            # Calcular tiempo transcurrido
+            current_time = datetime.now()
+            elapsed_since_start = (current_time - start_time).total_seconds() / 60
+            elapsed_since_last = (current_time - last_time).total_seconds() / 60
+            
+            # Logging del inicio del query
+            log_message(f"\n\nEjecutando Query {i}/{len(queries)}")
+            log_message(f"Tiempo transcurrido desde inicio: {elapsed_since_start:.2f} minutos")
+            log_message(f"Tiempo desde último query: {elapsed_since_last:.2f} minutos")
+            log_message("Query a ejecutar:")
+            log_message(query)
+            
             try:
+                # Ejecutar query
                 conn.executescript(query)
                 conn.commit()
+                
+                # Logging del éxito
+                log_message(f"Query {i} ejecutado exitosamente")
+                
             except sqlite3.Error as e:
-                print(f"Error ejecutando query: {str(e)}")
-                continue
+                # Logging del error
+                log_message(f"Error ejecutando query {i}: {str(e)}")
+                
+            # Actualizar tiempo del último query
+            last_time = datetime.now()
 
 
 if __name__ == "__main__":
