@@ -18,7 +18,7 @@ def configurar_conexion() -> sqlite3.Connection:
     pragmas = {
         'journal_mode': 'OFF',      # Deshabilita journaling para máxima velocidad
         'synchronous': 'OFF',       # Deshabilita sincronización con disco
-        'cache_size': -4000000,     # Cache de 4GB
+        'cache_size': -8000000,     # Cache de 4GB
         'temp_store': 'MEMORY'      # Temporales en memoria
     }
     
@@ -90,25 +90,28 @@ def configurar_para_indices(db_path: Union[str, Path]) -> None:
     
     # Configuración optimizada para indexación
     pragmas = {
-        'journal_mode': 'WAL',      # Permite concurrencia
-        'synchronous': 'NORMAL',    # Balance velocidad/seguridad
-        'cache_size': -2000000,     # 2GB cache
-        'mmap_size': 30000000000,   # 30GB mapeo en memoria
-        'page_size': 4096,          # Tamaño página óptimo
-        'temp_store': 'MEMORY'      # Temporales en memoria
+        # Configuraciones de escritura a disco
+        'journal_mode': 'OFF',          # Máxima velocidad, sin journaling
+        'synchronous': 'OFF',           # Sin espera de confirmación de disco
+        'locking_mode': 'EXCLUSIVE',    # Bloqueo exclusivo para mejor rendimiento
+        
+        # Configuraciones de memoria (optimizadas para 64GB RAM)
+        'cache_size': -45000000,        # ~45GB de cache (70% de RAM disponible)
+        'temp_store': 'MEMORY',         # Usar memoria para temporales
+        'mmap_size': 51539607552,       # ~48GB para memory mapping
+        
+        # Configuraciones de página y rendimiento
+        'page_size': 4096,              # Tamaño óptimo para NVMe
+        'auto_vacuum': 'NONE',          # Desactivar auto vacuum para mejor rendimiento
+        'busy_timeout': 300000,         # Timeout más largo (5 minutos) para operaciones grandes
+        
+        # Optimizaciones adicionales
+        'threads': 16,                  # Usar todos los cores disponibles
+        'analysis_limit': 1000,         # Límite de análisis para optimizador
+        'secure_delete': 'OFF',         # Desactivar borrado seguro para mejor rendimiento
+        'read_uncommitted': 1,          # Permitir lecturas sin confirmar para mejor rendimiento
     }
 
-    pragmas = {
-    'journal_mode': 'OFF',          # Máxima velocidad, sin journaling
-    'synchronous': 'OFF',           # Sin espera de confirmación de disco
-    'cache_size': -2000000,         # 2GB cache (mantener)
-    'temp_store': 'MEMORY',         # Mantener en memoria
-    'page_size': 4096,              # Mantener
-    'mmap_size': 30000000000,       # Mantener
-    'busy_timeout': 60000,          # Timeout para bloqueos
-    'locking_mode': 'EXCLUSIVE'     # Bloqueo exclusivo para mejor rendimiento
-    }
-    
     try:
         for setting, value in pragmas.items():
             conn.execute(f'PRAGMA {setting} = {value}')
@@ -149,7 +152,8 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     ]
     
     spatial_columns = [
-        "ALTER TABLE mobility ADD COLUMN IF NOT EXISTS geom POINT",
+        #"ALTER TABLE mobility ADD COLUMN geom POINT",
+        "SELECT AddGeometryColumn('mobility', 'geom', 4326, 'POINT', 'XY')";
         "UPDATE mobility SET geom = MakePoint(lon, lat, 4326)",
         "SELECT CreateSpatialIndex('mobility', 'geom')",
         "SELECT UpdateLayerStatistics('mobility', 'geom')"
