@@ -173,34 +173,32 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
                 with open(progress_file, 'a') as f:
                     f.write(err_msg)
                     print(err_msg)
-       
-        basic_msg = "\nCreando índices básicos..."
-        with open(progress_file, 'a') as f:
-            f.write(basic_msg)
-            print(basic_msg)
-        for cmd in index_commands:
-            execute_command(cmd)
-           
-        spatial_msg = "\nConfigurando extensión espacial..."
-        with open(progress_file, 'a') as f:
-            f.write(spatial_msg)
-            print(spatial_msg)
-        for cmd in spatial_setup:
-            execute_command(cmd)
-            
-        spatial_col_msg = "\nCreando columnas espaciales..."
-        with open(progress_file, 'a') as f:
-            f.write(spatial_col_msg)
-            print(spatial_col_msg)
-        for cmd in spatial_columns:
-            execute_command(cmd)
-            
-        temporal_msg = "\nCreando columnas temporales..."
-        with open(progress_file, 'a') as f:
-            f.write(temporal_msg)
-            print(temporal_msg)
-        for cmd in temporal_columns:
-            execute_command(cmd)
+
+        def execute_command_group(progress_file: str, commands: list, group_name: str) -> None:
+            """
+            Ejecuta un grupo de comandos y registra su progreso.
+        
+            Args:
+                progress_file: Ruta al archivo de progreso
+                commands: Lista de comandos a ejecutar
+                group_name: Nombre del grupo de comandos para el mensaje
+            """
+            message = f"\n{group_name}..."
+            with open(progress_file, 'a') as f:
+                f.write(message)
+                print(message)
+            for cmd in commands:
+                execute_command(cmd)
+
+        command_groups = [
+            (index_commands, "Creando índices básicos"),
+            #(spatial_setup, "Configurando extensión espacial"),
+            #(spatial_columns, "Creando columnas espaciales"),
+            (temporal_columns, "Creando columnas temporales")
+        ]
+        
+        for commands, group_name in command_groups:
+            execute_command_group(progress_file, commands, group_name)
             
     finally:
         conn.close()
