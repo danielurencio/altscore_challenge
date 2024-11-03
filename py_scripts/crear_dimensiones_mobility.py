@@ -5,7 +5,7 @@ queries = [
     """
     -- Query 1: Métricas básicas de conteo y actividad diaria
     -- Primero crear la tabla
-    CREATE TABLE basic_metrics (
+    CREATE TABLE dim_01__basic_metrics (
         h3_index TEXT PRIMARY KEY,
         devices_count INTEGER,
         avg_daily_visits REAL,
@@ -13,7 +13,7 @@ queries = [
     );
     
     -- Luego insertar los datos
-    INSERT INTO basic_metrics
+    INSERT INTO dim_01__basic_metrics
     WITH daily_counts AS (
         SELECT h3_index,
                date(fecha) as fecha_dia,
@@ -35,7 +35,7 @@ queries = [
     """
     -- Query 2: Métricas de patrones temporales
     -- Primero crear la tabla
-    CREATE TABLE temporal_metrics (
+    CREATE TABLE dim_02__temporal_metrics (
         h3_index TEXT PRIMARY KEY,
         peak_hour_activity TEXT,
         night_activity_ratio REAL,
@@ -43,7 +43,7 @@ queries = [
     );
     
     -- Luego insertar los datos
-    INSERT INTO temporal_metrics
+    INSERT INTO dim_02__temporal_metrics
     WITH hourly_counts AS (
         SELECT 
             h3_index,
@@ -72,14 +72,14 @@ queries = [
     """
     -- Query 3: Métricas de lealtad y rotación
     -- Primero crear la tabla
-    CREATE TABLE loyalty_metrics (
+    CREATE TABLE dim_03__loyalty_metrics (
         h3_index TEXT PRIMARY KEY,
         device_loyalty REAL,
         device_turnover REAL
     );
     
     -- Luego insertar los datos
-    INSERT INTO loyalty_metrics
+    INSERT INTO dim_03__loyalty_metrics
     WITH device_history AS (
         SELECT 
             h3_index,
@@ -99,7 +99,17 @@ queries = [
         AVG(CASE WHEN return_days > 0 THEN 1 ELSE 0 END) as device_turnover
     FROM device_history
     GROUP BY h3_index;
+    """,
     """
+    -- Query 4: Fact Table
+    -- Primero crear la tabla
+    CREATE TABLE dim_00__fact_table (
+        h3_index TEXT PRIMARY KEY
+    );
+    INSERT INTO dim_00__fact_table
+    select distinct hex_3_index from dim_01__basic_metrics;
+    """
+
 ]
 
 
