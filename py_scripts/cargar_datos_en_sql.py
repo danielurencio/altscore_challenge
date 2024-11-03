@@ -124,20 +124,10 @@ def configurar_para_indices(db_path: Union[str, Path]) -> None:
 
 def creacion_de_indices(db_path: Union[str, Path]) -> None:
     """
-    Ejecuta script de optimización sobre la base de datos con configuraciones
-    optimizadas para manejar grandes volúmenes de datos.
+    Ejecuta script de optimización sobre la base de datos.
+    Solo ejecuta los comandos, no realiza configuraciones.
     """
     start_time = datetime.now()
-    
-    # Separamos los comandos por tipo para mejor control
-    optimization_settings = """
-    PRAGMA journal_mode = OFF;
-    PRAGMA synchronous = OFF;
-    PRAGMA cache_size = -2000000;  -- Use 2GB of cache
-    PRAGMA temp_store = MEMORY;
-    PRAGMA mmap_size = 30000000000;
-    PRAGMA page_size = 4096;  -- Optimal page size for most systems
-    """
     
     index_commands = [
         "CREATE INDEX IF NOT EXISTS idx_mobility_device ON mobility(device_id)",
@@ -152,31 +142,20 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
     ]
     
     spatial_columns = [
-        #"ALTER TABLE mobility ADD COLUMN geom POINT",
-        "SELECT AddGeometryColumn('mobility', 'geom', 4326, 'POINT', 'XY')";
+        "SELECT AddGeometryColumn('mobility', 'geom', 4326, 'POINT', 'XY')",
         "UPDATE mobility SET geom = MakePoint(lon, lat, 4326)",
         "SELECT CreateSpatialIndex('mobility', 'geom')",
         "SELECT UpdateLayerStatistics('mobility', 'geom')"
     ]
     
     temporal_columns = [
-        "ALTER TABLE mobility ADD COLUMN IF NOT EXISTS fecha DATETIME",
+        "SELECT CASE WHEN COUNT(*) = 0 THEN 'ALTER TABLE mobility ADD COLUMN fecha DATETIME' ELSE 'SELECT 1' END FROM pragma_table_info('mobility') WHERE name = 'fecha'",
         "UPDATE mobility SET fecha = datetime(timestamp, 'unixepoch')"
     ]
     
     conn = sqlite3.connect(db_path)
     try:
         conn.enable_load_extension(True)
-        
-        # Aplicar configuraciones de optimización
-        print("\nAplicando configuraciones de optimización...")
-        for command in optimization_settings.strip().split(';'):
-            if command.strip():
-                try:
-                    conn.execute(command)
-                    conn.commit()
-                except sqlite3.OperationalError as e:
-                    print(f"Error en configuración {command.strip()}: {e}")
         
         # Función helper para ejecutar comandos con timing
         def execute_command(command: str, description: str) -> None:
@@ -200,16 +179,13 @@ def creacion_de_indices(db_path: Union[str, Path]) -> None:
             
         print("\nCreando columnas espaciales...")
         for cmd in spatial_columns:
-            execute_command(cmd, cmd.strip().split()[0])  # Primer palabra del comando
+            execute_command(cmd, cmd.strip().split()[0])  # Primera palabra del comando
             
         print("\nCreando columnas temporales...")
         for cmd in temporal_columns:
-            execute_command(cmd, cmd.strip().split()[0])  # Primer palabra del comando
+            execute_command(cmd, cmd.strip().split()[0])  # Primera palabra del comando
             
     finally:
-        # Restaurar configuraciones normales antes de cerrar
-        conn.execute("PRAGMA journal_mode = WAL")
-        conn.execute("PRAGMA synchronous = NORMAL")
         conn.close()
     
     total_time = datetime.now() - start_time
