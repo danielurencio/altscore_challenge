@@ -1,8 +1,9 @@
 import os
 
+import h3
 import json
 import pandas as pd
-import h3
+import duckdb
 
 path = 'ecuador_listings'
 files = os.listdir(path)
@@ -66,3 +67,98 @@ df = pd.DataFrame(parsed_postings)
 df = procesar_coordenadas(df, 9)
 df.to_csv('parsed_plusvalia_postings.csv.gz',
           compression='gzip', index=False)
+
+
+q = '''
+with base as (
+
+    select distinct
+      hex_id
+    , posting_id
+    , property_type
+    , operation_type
+    , is_premier
+    , price
+    from df
+    where true
+    and property_type in (1, 2, 3, 4, 5)
+    and operation_type in (1, 2)
+
+)
+select
+  hex_id
+, count(distinct posting_id) plusv_anuncios_inmobiliarios
+, count(distinct case when property_type = 1 and operation_type = 1 then posting_id else null end) plusv_anuncios_casas_venta
+, count(distinct case when property_type = 1 and operation_type = 2 then posting_id else null end) plusv_anuncios_casas_renta
+, avg(case when property_type = 1 and operation_type = 1 then price else null end) plusv_anuncios_casas_venta_promedio
+, avg(case when property_type = 1 and operation_type = 2 then price else null end) plusv_anuncios_casas_renta_promedio
+, median(case when property_type = 1 and operation_type = 1 then price else null end) plusv_anuncios_casas_venta_mediana
+, median(case when property_type = 1 and operation_type = 2 then price else null end) plusv_anuncios_casas_renta_mediana
+, stddev(case when property_type = 1 and operation_type = 1 then price else null end) plusv_anuncios_casas_venta_stddev
+, stddev(case when property_type = 1 and operation_type = 2 then price else null end) plusv_anuncios_casas_renta_stddev
+, quantile(case when property_type = 1 and operation_type = 1 then price else null end, 0.25) plusv_anuncios_casas_venta_p25
+, quantile(case when property_type = 1 and operation_type = 2 then price else null end, 0.25) plusv_anuncios_casas_renta_p25
+, quantile(case when property_type = 1 and operation_type = 1 then price else null end, 0.75) plusv_anuncios_casas_venta_p75
+, quantile(case when property_type = 1 and operation_type = 2 then price else null end, 0.75) plusv_anuncios_casas_renta_p75
+
+, count(distinct case when property_type = 2 and operation_type = 1 then posting_id else null end) plusv_anuncios_deptos_venta
+, count(distinct case when property_type = 2 and operation_type = 2 then posting_id else null end) plusv_anuncios_deptos_renta
+, avg(case when property_type = 2 and operation_type = 1 then price else null end) plusv_anuncios_deptos_venta_promedio
+, avg(case when property_type = 2 and operation_type = 2 then price else null end) plusv_anuncios_deptos_renta_promedio
+, median(case when property_type = 2 and operation_type = 1 then price else null end) plusv_anuncios_deptos_venta_mediana
+, median(case when property_type = 2 and operation_type = 2 then price else null end) plusv_anuncios_deptos_renta_mediana
+, stddev(case when property_type = 2 and operation_type = 1 then price else null end) plusv_anuncios_deptos_venta_stddev
+, stddev(case when property_type = 2 and operation_type = 2 then price else null end) plusv_anuncios_deptos_renta_stddev
+, quantile(case when property_type = 2 and operation_type = 1 then price else null end, 0.25) plusv_anuncios_deptos_venta_p25
+, quantile(case when property_type = 2 and operation_type = 2 then price else null end, 0.25) plusv_anuncios_deptos_renta_p25
+, quantile(case when property_type = 2 and operation_type = 1 then price else null end, 0.75) plusv_anuncios_deptos_venta_p75
+, quantile(case when property_type = 2 and operation_type = 2 then price else null end, 0.75) plusv_anuncios_deptos_renta_p75
+
+, count(distinct case when property_type = 3 and operation_type = 1 then posting_id else null end) plusv_anuncios_terrenos_venta
+, count(distinct case when property_type = 3 and operation_type = 2 then posting_id else null end) plusv_anuncios_terrenos_renta
+, avg(case when property_type = 3 and operation_type = 1 then price else null end) plusv_anuncios_terrenos_venta_promedio
+, avg(case when property_type = 3 and operation_type = 2 then price else null end) plusv_anuncios_terrenos_renta_promedio
+, median(case when property_type = 3 and operation_type = 1 then price else null end) plusv_anuncios_terrenos_venta_mediana
+, median(case when property_type = 3 and operation_type = 2 then price else null end) plusv_anuncios_terrenos_renta_mediana
+, stddev(case when property_type = 3 and operation_type = 1 then price else null end) plusv_anuncios_terrenos_venta_stddev
+, stddev(case when property_type = 3 and operation_type = 2 then price else null end) plusv_anuncios_terrenos_renta_stddev
+, quantile(case when property_type = 3 and operation_type = 1 then price else null end, 0.25) plusv_anuncios_terrenos_venta_p25
+, quantile(case when property_type = 3 and operation_type = 2 then price else null end, 0.25) plusv_anuncios_terrenos_renta_p25
+, quantile(case when property_type = 3 and operation_type = 1 then price else null end, 0.75) plusv_anuncios_terrenos_venta_p75
+, quantile(case when property_type = 3 and operation_type = 2 then price else null end, 0.75) plusv_anuncios_terrenos_renta_p75
+
+, count(distinct case when property_type = 4 and operation_type = 1 then posting_id else null end) plusv_anuncios_oficinas_venta
+, count(distinct case when property_type = 4 and operation_type = 2 then posting_id else null end) plusv_anuncios_oficinas_renta
+, avg(case when property_type = 4 and operation_type = 1 then price else null end) plusv_anuncios_oficinas_venta_promedio
+, avg(case when property_type = 4 and operation_type = 2 then price else null end) plusv_anuncios_oficinas_renta_promedio
+, median(case when property_type = 4 and operation_type = 1 then price else null end) plusv_anuncios_oficinas_venta_mediana
+, median(case when property_type = 4 and operation_type = 2 then price else null end) plusv_anuncios_oficinas_renta_mediana
+, stddev(case when property_type = 4 and operation_type = 1 then price else null end) plusv_anuncios_oficinas_venta_stddev
+, stddev(case when property_type = 4 and operation_type = 2 then price else null end) plusv_anuncios_oficinas_renta_stddev
+, quantile(case when property_type = 4 and operation_type = 1 then price else null end, 0.25) plusv_anuncios_oficinas_venta_p25
+, quantile(case when property_type = 4 and operation_type = 2 then price else null end, 0.25) plusv_anuncios_oficinas_renta_p25
+, quantile(case when property_type = 4 and operation_type = 1 then price else null end, 0.75) plusv_anuncios_oficinas_venta_p75
+, quantile(case when property_type = 4 and operation_type = 2 then price else null end, 0.75) plusv_anuncios_oficinas_renta_p75
+
+, count(distinct case when property_type = 5 and operation_type = 1 then posting_id else null end) plusv_anuncios_locales_venta
+, count(distinct case when property_type = 5 and operation_type = 2 then posting_id else null end) plusv_anuncios_locales_renta
+, avg(case when property_type = 5 and operation_type = 1 then price else null end) plusv_anuncios_locales_venta_promedio
+, avg(case when property_type = 5 and operation_type = 2 then price else null end) plusv_anuncios_locales_renta_promedio
+, median(case when property_type = 5 and operation_type = 1 then price else null end) plusv_anuncios_locales_venta_mediana
+, median(case when property_type = 5 and operation_type = 2 then price else null end) plusv_anuncios_locales_renta_mediana
+, stddev(case when property_type = 5 and operation_type = 1 then price else null end) plusv_anuncios_locales_venta_stddev
+, stddev(case when property_type = 5 and operation_type = 2 then price else null end) plusv_anuncios_locales_renta_stddev
+, quantile(case when property_type = 5 and operation_type = 1 then price else null end, 0.25) plusv_anuncios_locales_venta_p25
+, quantile(case when property_type = 5 and operation_type = 2 then price else null end, 0.25) plusv_anuncios_locales_renta_p25
+, quantile(case when property_type = 5 and operation_type = 1 then price else null end, 0.75) plusv_anuncios_locales_venta_p75
+, quantile(case when property_type = 5 and operation_type = 2 then price else null end, 0.75) plusv_anuncios_locales_renta_p75
+from base
+group by 1
+'''
+
+conn = duckdb.connect()
+conn.register('df', df)
+
+r = conn.execute(q).df()
+conn.close()
+r.to_csv('dim_plusv_info_inmobiliaria.csv.gz', index=False, compression='gzip')

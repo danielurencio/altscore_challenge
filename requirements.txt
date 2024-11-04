@@ -7,3 +7,4 @@ h3==4.1.2
 pyarrow==18.0.0
 kaggle>=1.6.17
 pandasql==0.7.3
+duckdb==1.1.3
