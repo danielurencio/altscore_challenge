@@ -28,3 +28,13 @@ kaggle.json
 **/*.db*
 *.db*
 /**/*.db*
+
+# GDB
+**/*.gdb*
+*.gdb*
+/**/*.gdb*
+
+# GPKG
+**/*.gpkg*
+*.gpkg*
+/**/*.gpkg*

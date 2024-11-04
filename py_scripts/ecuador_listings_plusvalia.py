@@ -25,6 +25,25 @@ property_types = [
     {"label": "Quinta vacacional", "min": "11"}
 ]
 
+property_types = [
+    {"label": "Departamento", "min": "2"},
+    {"label": "Casa", "min": "1"},
+
+    #{"label": "Terreno / Lote", "min": "3"},
+    #{"label": "Local comercial", "min": "5"},
+    # {"label": "Oficina comercial", "min": "4"},
+    
+    # {"label": "Suite", "min": "9"},
+    # {"label": "Bodega-Galpón", "min": "8"},
+    # {"label": "Consultorio", "min": "10"},
+    # {"label": "Edificio-Hotel-Fabrica", "min": "7"},
+    # {"label": "Habitación", "min": "25"},
+    # {"label": "Hacienda-Quinta", "min": "6"},
+    # {"label": "Parqueadero", "min": "32"},
+    # {"label": "Proyecto horizontal", "min": "33"},
+    # {"label": "Proyecto vertical", "min": "34"},
+    # {"label": "Quinta vacacional", "min": "11"}
+]
 
 operation_types = [
     {"label": "Alquilar", "min": "2"},
@@ -32,6 +51,15 @@ operation_types = [
     {"label": "Temporal/Vacacional", "min": "4"},
     {"label": "Proyectos", "min": "desarrollosURL"},
     {"label": "Traspaso", "min": "3"}
+]
+
+operation_types = [
+    {"label": "Alquilar", "min": "2"},
+    {"label": "Comprar", "min": "1"},
+    
+    # {"label": "Temporal/Vacacional", "min": "4"},
+    # {"label": "Proyectos", "min": "desarrollosURL"},
+    # {"label": "Traspaso", "min": "3"}
 ]
 
 # Create a directory to save each response as a JSON file
@@ -145,7 +173,7 @@ if __name__ == '__main__':
                 operation_type = operation['label']
                 filename = f"{row['hex_id']}_{property['min']}_{operation['min']}"
 
-                if filename not in os.listdir('ecuador_listings'):
+                if f"{filename}.json" not in os.listdir('ecuador_listings'):
                     resp = fetch_listings_by_type(property_type, operation_type)(row['bbox_corners'])
                     resp['hex_id'] = filename
                     resp['bbox_corners'] = row['bbox_corners']
