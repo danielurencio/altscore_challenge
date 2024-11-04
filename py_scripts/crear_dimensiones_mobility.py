@@ -209,72 +209,6 @@ FROM hourly_patterns h
 LEFT JOIN weekly_stats w ON h.h3_index = w.h3_index
 GROUP BY h.h3_index;
     """,
-
-#     # Query 6: Métricas de conectividad
-#     """
-#     CREATE TABLE IF NOT EXISTS dim_06__connectivity_metrics (
-#         h3_index TEXT PRIMARY KEY,
-#         unique_next_hexs INTEGER,
-#         return_probability REAL,
-#         avg_connected_hexs REAL
-#     );
-
-# INSERT OR REPLACE INTO dim_06__connectivity_metrics
-# WITH device_daily_locations AS (
-#     -- Primero agrupamos por día y dispositivo para reducir el volumen de datos
-#     SELECT 
-#         device_id,
-#         h3_index,
-#         date(fecha) as visit_date,
-#         MIN(timestamp) as first_timestamp
-#     FROM mobility
-#     GROUP BY device_id, h3_index, date(fecha)
-# ),
-# device_movements AS (
-#     -- Ahora calculamos movimientos usando datos pre-agregados
-#     SELECT 
-#         m1.h3_index as origin_hex,
-#         m2.h3_index as next_hex,
-#         m1.device_id,
-#         COUNT(*) as transitions,
-#         MIN((m2.first_timestamp - m1.first_timestamp)/3600.0) as hours_between
-#     FROM device_daily_locations m1
-#     JOIN device_daily_locations m2 ON 
-#         m1.device_id = m2.device_id 
-#         AND m2.first_timestamp > m1.first_timestamp
-#         AND m2.h3_index != m1.h3_index
-#         AND m2.first_timestamp - m1.first_timestamp <= 86400  -- 24 horas en segundos
-#         AND m1.visit_date = m2.visit_date  -- Restricción adicional para reducir joins
-#     GROUP BY m1.h3_index, m2.h3_index, m1.device_id
-# ),
-# daily_hex_counts AS (
-#     -- Pre-calculamos conteos diarios una vez
-#     SELECT 
-#         device_id,
-#         visit_date,
-#         COUNT(DISTINCT h3_index) as hexs_visited
-#     FROM device_daily_locations
-#     GROUP BY device_id, visit_date
-# ),
-# hex_averages AS (
-#     -- Pre-calculamos promedios por hexágono
-#     SELECT 
-#         m.h3_index,
-#         AVG(CAST(dhc.hexs_visited as FLOAT)) as avg_hexs
-#     FROM mobility m
-#     JOIN daily_hex_counts dhc ON dhc.device_id = m.device_id
-#     GROUP BY m.h3_index
-# )
-# SELECT 
-#     dm.origin_hex as h3_index,
-#     COUNT(DISTINCT dm.next_hex) as unique_next_hexs,
-#     COUNT(DISTINCT CASE WHEN dm.hours_between <= 24 THEN dm.device_id END) * 1.0 / 
-#         NULLIF(COUNT(DISTINCT dm.device_id), 0) as return_probability,
-#     ha.avg_hexs as avg_connected_hexs
-# FROM device_movements dm
-# LEFT JOIN hex_averages ha ON dm.origin_hex = ha.h3_index
-# GROUP BY dm.origin_hex;
-#    """,
     """
     CREATE TABLE mobility_dimensions AS
     SELECT 
@@ -289,24 +223,7 @@ GROUP BY h.h3_index;
 ]
 
 
-# def execute_queries(db_path, queries):
-#     """
-#     Ejecuta una lista de queries SQL para crear tablas de métricas.
 
-#     Args:
-#         db_path (str): Ruta al archivo de la base de datos SQLite
-#         queries (list): Lista de strings conteniendo los queries SQL
-#     """
-#     with sqlite3.connect(db_path) as conn:
-#         for query in queries:
-#             print('\n\n')
-#             print(query)
-#             try:
-#                 conn.executescript(query)
-#                 conn.commit()
-#             except sqlite3.Error as e:
-#                 print(f"Error ejecutando query: {str(e)}")
-#                 continue
 def execute_queries(db_path, queries):
     """
     Ejecuta una lista de queries SQL para crear tablas de métricas.
