@@ -245,6 +245,15 @@ select
 from grouped
 '''
 
+q_final = '''
+select
+  *
+from dim_man
+left join dim_aream using(hex_id)
+left join dim_ejes using(hex_id)
+left join dim_viv using(hex_id)
+'''
+
 if __name__ == '__main__':
     # El primer paso es procesar todas las capas según su tipo
     # Nuestra base son los hexágonos, por lo que necesitamos hacer
@@ -266,3 +275,6 @@ if __name__ == '__main__':
     results['dim_ejes'] = sql_query(q_ejes, results)
     results['dim_viv'] = sql_query(q_viv, results)
 
+    # Cómputo de dataset final
+    final_dim = sql_query(q_final, results)
+    final_dim.to_csv('dim_infra.csv.gz', index=False, compression='gzip')
