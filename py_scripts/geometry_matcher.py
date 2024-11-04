@@ -9,14 +9,23 @@ import pandas as pd
 import h3
 from shapely.geometry import Polygon
 from tqdm import tqdm
+os.makedirs('resultados', exist_ok=True)
 
 # 1. Primero leemos tu archivo de hexágonos
 hex = pd.read_csv('hex.csv.gzip', compression='gzip')
 
 # 2. Convertimos los hexágonos a GeoDataFrame
-def h3_to_polygon(h3_address):
+def h3_to_polygon_(h3_address):
     coords = h3.cell_to_boundary(h3_address)
     return Polygon(coords)
+
+def h3_to_polygon(h3_address):
+    # Get the coordinates (returns [lat, lng] pairs)
+    coords = h3.cell_to_boundary(h3_address)
+    # Flip coordinates to [lng, lat] pairs for Shapely
+    coords_flipped = [(lng, lat) for lat, lng in coords]
+    return Polygon(coords_flipped)
+
 
 print("Convirtiendo hexágonos a geometrías...")
 geometries = [h3_to_polygon(h3_id) for h3_id in tqdm(hex['hex_id'])]
