@@ -37,8 +37,9 @@ for i, layer in enumerate(layers, 1):
     print(f"\nLeyendo capa {i}/{len(layers)}: {layer}")
     
     start_time = time.time()
-    gdf = gpd.read_file(file_path, layer=layer)
+    gdf = gpd.read_file(file_path, layer=layer).to_crs('EPSG:4326')
     elapsed_time = time.time() - start_time
-    
+    gdfs.append(gdf)
     print(f"Registros: {len(gdf)}")
     print(f"Tiempo de carga: {format_time(elapsed_time)}")
+    print(gdf.info())
