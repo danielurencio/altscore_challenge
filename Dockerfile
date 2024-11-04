@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     vim \
     sqlite3 \
+    watch \
     libsqlite3-mod-spatialite \
     && rm -rf /var/lib/apt/lists/*
 
