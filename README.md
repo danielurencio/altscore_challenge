@@ -36,3 +36,5 @@ El contenedor genera una instancia de _jupyter notebook_ el cual se puede accede
 ```
 http://localhost:8888
 ```
+
+Para ver el código de entrenamiento, consúltese el archivo `notebooks/Model.ipynb`.
