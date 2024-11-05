@@ -38,3 +38,6 @@ http://localhost:8888
 ```
 
 Para ver el código de entrenamiento, consúltese el archivo `notebooks/Model.ipynb`.
+
+#### Importante:
+* Para poder construir la imagen de docker es necesario tener en el mismo directorio un archivo `kaggle.json` con las credenciales para autenticarse y descargar los datos de la competencia.
