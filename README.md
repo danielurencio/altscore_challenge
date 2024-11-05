@@ -9,10 +9,10 @@ Y, después:
 ```console
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     # Windows-specific
-    export HOST_PATH=$(pwd -W)/db
+    export HOST_PATH=$(pwd -W)
 else
     # Unix/Linux-specific
-    export HOST_PATH=$(pwd)/db
+    export HOST_PATH=$(pwd)
 fi
 
 sudo docker rm -f altscore_challenge || true
@@ -21,7 +21,9 @@ sudo docker run -d \
   --name altscore_challenge \
   --memory="60g" \
   --cpus=16 \
-  -v "$HOST_PATH":/app/db \
+  -v "$HOST_PATH"/db:/app/db \
+  -v "$HOST_PATH"/notebooks:/app/notebooks \
+  -p 8888:8888 \
   altscore_env 
 ```
 

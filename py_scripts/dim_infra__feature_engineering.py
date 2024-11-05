@@ -139,15 +139,27 @@ with base as (
     , tipo_aream
     from aream_a
 
+) , dummies as (
+
+    select
+    hex_id
+    , case when tipo_aream = 'CAPITAL PROVINCIAL' then 1 else 0 end is_aream_capital_provincial_
+    , case when tipo_aream = 'CABECERA PARROQUAL' then 1 else 0 end is_aream_cabecera_parroquial_
+    , case when tipo_aream = 'LOCALIDAD AMANZANADA' then 1 else 0 end is_aream_localidad_amanzanada_
+    , case when tipo_aream = 'CABECERA CANTONAL' then 1 else 0 end is_aream_cabecera_cantonal_
+    , case when tipo_aream is null then 1 else 0 end is_aream_null_
+    from base
+
 )
 select
   hex_id
-, case when tipo_aream = 'CAPITAL PROVINCIAL' then 1 else 0 end is_aream_capital_provincial
-, case when tipo_aream = 'CABECERA PARROQUAL' then 1 else 0 end is_aream_cabecera_parroquial
-, case when tipo_aream = 'LOCALIDAD AMANZANADA' then 1 else 0 end is_aream_localidad_amanzanada
-, case when tipo_aream = 'CABECERA CANTONAL' then 1 else 0 end is_aream_cabecera_cantonal
-, case when tipo_aream is null then 1 else 0 end is_aream_null
-from base
+, max(is_aream_capital_provincial_) is_aream_capital_provincial
+, max(is_aream_cabecera_parroquial_) is_aream_cabecera_parroquial
+, max(is_aream_localidad_amanzanada_) is_aream_localidad_amanzanada
+, max(is_aream_cabecera_cantonal_) is_aream_cabecera_cantonal
+, max(is_aream_null_) is_aream_null
+from dummies
+group by 1
 '''
 
 
