@@ -29,7 +29,6 @@ RUN pip install --no-cache-dir --upgrade pip
 COPY requirements.txt .
 
 # Instala las dependencias
-#RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt \
     jupyter \
     notebook \
@@ -56,9 +55,6 @@ RUN kaggle competitions download -c alt-score-data-science-competition \
 COPY ./py_scripts ./py_scripts/
 COPY ./shell_scripts ./shell_scripts/
 COPY ./*.csv.gz ./
-
-# # Mantén el ambiente corriendo
-# CMD ["tail", "-f", "/dev/null"]
 
 # Crear directorio para notebooks
 RUN mkdir -p /app/notebooks
