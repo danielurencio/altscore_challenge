@@ -32,14 +32,7 @@ Una vez levantado el contenedor, es posible hacer "`ssh`" mediante:
 sudo docker exec -it altscore_challenge bash
 ```
 
-Dentro del contenedor debe de existir una estructura como esta:
+El contenedor genera una instancia de _jupyter notebook_ el cual se puede acceder desde:
 ```
-/app/
-  ├── altscore_data/
-  ├── py_scripts/
-  │   ├── script1.py
-  │   └── script2.py
-  └── shell_scripts/
-      ├── script1.sh
-      └── script2.sh
+http://localhost:8888
 ```
