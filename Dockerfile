@@ -29,7 +29,12 @@ RUN pip install --no-cache-dir --upgrade pip
 COPY requirements.txt .
 
 # Instala las dependencias
-RUN pip install --no-cache-dir -r requirements.txt
+#RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    jupyter \
+    notebook \
+    ipywidgets
+
 RUN rm requirements.txt
 
 # Configura el directorio para las credenciales de Kaggle
@@ -50,6 +55,21 @@ RUN kaggle competitions download -c alt-score-data-science-competition \
 # Crea y copia a directorios específicos
 COPY ./py_scripts ./py_scripts/
 COPY ./shell_scripts ./shell_scripts/
+COPY ./*.csv.gz ./
 
-# Mantén el ambiente corriendo
-CMD ["tail", "-f", "/dev/null"]
+# # Mantén el ambiente corriendo
+# CMD ["tail", "-f", "/dev/null"]
+
+# Crear directorio para notebooks
+RUN mkdir -p /app/notebooks
+
+# Exponer puerto para Jupyter
+EXPOSE 8888
+
+# Agregar esto antes del CMD
+RUN jupyter notebook --generate-config
+RUN echo "c.NotebookApp.token = ''" >> /root/.jupyter/jupyter_notebook_config.py
+RUN echo "c.NotebookApp.password = ''" >> /root/.jupyter/jupyter_notebook_config.py
+
+# Nuevo CMD para iniciar Jupyter
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]

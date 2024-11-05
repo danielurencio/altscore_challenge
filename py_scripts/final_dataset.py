@@ -9,7 +9,7 @@ dimensions = [
 
 renames = dict(h3_index='hex_id')
 dims = {
-    k: pd.read_csv(v, compression='gzip').rename(columns=renames)
+    k: pd.read_csv(v, compression='gzip', encoding='utf-8').rename(columns=renames)
     for k, v in dimensions
 }
 
@@ -21,4 +21,4 @@ left join anuncios_inmobiliarios using(hex_id)
 left join movilidad using(hex_id)
 '''
 dataset = psql.sqldf(q, dims)
-dataset.to_csv('final_datset.csv.gz', index=False, compression='gzip')
+dataset.to_csv('final_dataset.csv.gz', index=False, compression='gzip')
