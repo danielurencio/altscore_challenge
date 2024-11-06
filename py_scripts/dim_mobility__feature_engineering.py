@@ -83,13 +83,6 @@ queries = [
     );
     
     -- Luego insertar los datos
-    INSERT INTO dim_03__loyalty_metrics
-CREATE TABLE dim_03__loyalty_metrics (
-    h3_index TEXT PRIMARY KEY,
-    device_loyalty REAL,
-    device_turnover REAL
-);
-
 INSERT INTO dim_03__loyalty_metrics
 WITH device_first_visits AS (
     -- Primero obtenemos la primera visita por dispositivo y hexágono
